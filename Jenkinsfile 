@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "appweb-nginx"
+        CONTAINER_NAME = "appweb-container"
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Helo9080/AppWeb'
+            }
+        }
+
+        stage('Test HTML') {
+            steps {
+                script {
+                    def html = readFile('index.html')
+                    if (!html.contains("<html")) {
+                        error("❌ Test Failed: <html> tag not found in index.html")
+                    }
+                    echo "✅ HTML Test Passed"
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:latest ."
+            }
+        }
+
+        stage('Restart Container') {
+            steps {
+                script {
+                    sh """
+                    docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || echo 'No running container to sto_
