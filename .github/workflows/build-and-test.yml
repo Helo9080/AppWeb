@@ -1,24 +1,43 @@
-name: Test Only
+name: Test and Deploy to Kubernetes on AWS
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
-  just-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Before
-        run: ls
-
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Run simple test
-        run: echo "✅ Running tests..." && echo "✅ All tests passed!"
+      # 1️⃣ Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # غيّر المنطقة حسب إعدادك
 
-      - name: After
-        run: ls
+      # 2️⃣ Build Docker image
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/test-only:latest .
+
+      # 3️⃣ Login to Docker Hub
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # 4️⃣ Push image to Docker Hub
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/test-only:latest
+
+      # 5️⃣ Update kubeconfig for EKS
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --region us-east-1 --name your-cluster-name
+
+      # 6️⃣ Update Kubernetes deployment
+      - name: Set new image in Kubernetes
+        run: |
+          kubectl set image deployment/frontend-deployment frontend=${{ secrets.DOCKER_USERNAME }}/test-only:latest --record
+          kubectl rollout status deployment/frontend-deployment
