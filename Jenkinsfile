@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'host' }
 
     stages {
         stage('Clone Repo') {
@@ -17,6 +17,15 @@ pipeline {
                     }
                     echo "✅ HTML Test Passed"
                 }
+            }
+        }
+
+        stage('Create File') {
+            steps {
+                sh '''
+                    echo "✅ HTML Test Passed and File Created by Jenkins!" > result.txt
+                    cat result.txt
+                '''
             }
         }
     }
