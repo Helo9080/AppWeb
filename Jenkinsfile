@@ -4,11 +4,10 @@ pipeline {
     stages {
         stage('Clone Repo') {
             steps {
-                git branch: 'main', url: 'https://github.com/Helo9080/AppWeb'
+                git branch: 'main', url: 'https://github.com/Helo9080/AppWeb.git'
             }
         }
 
-    }
         stage('Test HTML') {
             steps {
                 script {
@@ -20,8 +19,5 @@ pipeline {
                 }
             }
         }
-
-      
-        }
-    
-
+    }
+}
