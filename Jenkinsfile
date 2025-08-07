@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = "appweb-nginx"
-        CONTAINER_NAME = "appweb-container"
-    }
-
     stages {
         stage('Clone Repo') {
             steps {
@@ -13,6 +8,7 @@ pipeline {
             }
         }
 
+    }
         stage('Test HTML') {
             steps {
                 script {
@@ -25,22 +21,7 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t ${IMAGE_NAME}:latest ."
-            }
+      
         }
+    
 
-        stage('Restart Container') {
-            steps {
-                script {
-                    sh """
-                    docker ps -q --filter "name=${CONTAINER_NAME}" | grep -q . && docker stop ${CONTAINER_NAME} && docker rm ${CONTAINER_NAME} || echo 'No running container to stop.'
-                    docker run -d --name ${CONTAINER_NAME} -p 8080:80 ${IMAGE_NAME}:latest
-                    """
-                    echo "✅ Container restarted with latest image"
-                }
-            }
-        }
-    }
-}
